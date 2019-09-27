@@ -7,7 +7,7 @@
 // Date: 2019/09/20
 ////////////////////////////////////////
 // Student Name: CHAO-YU HUANG
-// Student ID: 0416094
+// Student ID: 0856601
 // Student Email: b608390@gmail.com
 //
 ////////////////////////////////////////
@@ -26,10 +26,18 @@ using namespace Ogre;
 
 SceneNode* bigPNode;
 SceneNode* smallPNode;
-std::string animationState = "off";
+std::string animation = "off";
+std::string animationState = "state1";
 const float PI = 3.141592654;
 
-BasicTutorial_00::BasicTutorial_00(void) {}
+BasicTutorial_00::BasicTutorial_00(void) {
+    mAngle = 0.0;
+	mAngularAcceleration = PI / 20;
+	mAngularSpeed = 0.0;
+	mWaitingTime = 0.0;
+	mRadius = 200.0;
+	mRotateDir = 1;
+} 
 
 void BasicTutorial_00::chooseSceneManager()
 {   
@@ -37,18 +45,15 @@ void BasicTutorial_00::chooseSceneManager()
 		->createSceneManager(ST_GENERIC, "primary");
 	mSceneMgrArr[1] = mRoot
 		->createSceneManager(ST_GENERIC, "secondary");
-    //
-    // add your own stuff
-    //
 }
 
 void BasicTutorial_00::createCamera_00(void)
 {
 	mSceneMgr = mSceneMgrArr[0];
-	mCamera = mCameraArr[0] = mSceneMgr->createCamera("PlayerCam0");
-	mCamera->setPosition(Ogre::Vector3(120,300,600));
-	mCamera->lookAt(Ogre::Vector3(120,0,0));
-	mCamera->setNearClipDistance(5);
+	mCamera = mCameraArr[0] = mSceneMgr -> createCamera("PlayerCam0");
+	mCamera -> setPosition(Ogre::Vector3(120,300,600));
+	mCamera -> lookAt(Ogre::Vector3(120,0,0));
+	mCamera -> setNearClipDistance(5);
 	mCameraManArr[0] = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
 
@@ -81,7 +86,6 @@ void BasicTutorial_00::createViewport_00(void)
 
 void BasicTutorial_00::createViewport_01(void)
 {    
-    // add your own stuff	
 	mCamera = mCameraArr[1];
     Ogre::Viewport* vp = mWindow->addViewport(mCamera, 1, 0.0, 0.0, 0.25, 0.25);
     vp -> setBackgroundColour(Ogre::ColourValue(0,0.5,0));
@@ -97,7 +101,7 @@ void BasicTutorial_00::createViewport_01(void)
 void BasicTutorial_00::createScene_00(void) 
 {
 	mSceneMgr = mSceneMgrArr[0];
-	mSceneMgr->setAmbientLight( ColourValue( 0.7, 0.7, 0.7 ) ); 
+	mSceneMgr->setAmbientLight( ColourValue( 0.3, 0.3, 0.3 ) ); 
 	mSceneMgr->setShadowTechnique(SHADOWTYPE_STENCIL_ADDITIVE);
 
 	Plane plane(Vector3::UNIT_Y, 0); 
@@ -118,7 +122,6 @@ void BasicTutorial_00::createScene_00(void)
 	SceneNode* groundNode = mSceneMgr->getRootSceneNode() -> createChildSceneNode();
 	groundNode -> attachObject(entGround); 
 	entGround->setCastShadows(false);
-	//entGround->setMaterialName("Examples/Rockwall");
 
 	// Create big penguin
 	Entity* entBigP = mSceneMgr -> createEntity("BigPenguin", "penguin.mesh");
@@ -133,8 +136,6 @@ void BasicTutorial_00::createScene_00(void)
 	smallPNode = mSceneMgr -> getRootSceneNode() -> createChildSceneNode("smallP", Vector3(200, 20, 0));
 	smallPNode -> attachObject(entSmallP);
 	smallPNode -> yaw(Degree(-90));
-
-	
 
 	// Create Circle
 	int numCubes = 72;
@@ -186,8 +187,6 @@ void BasicTutorial_00::createScene_00(void)
 	light1 -> setDirection(Vector3(-1.6, -1.6, -1));
 	light1 -> setDiffuseColour( 0.8, 0.8, 0.8 );		
 	light1 -> setSpecularColour( 0.3, 0.3, 0.3 );
-	//light1 -> setSpotlightRange(Degree(35), Degree(50));
-
 	
 	Light* light2 = mSceneMgr -> createLight("Light2");
 	light2 -> setType(Light::LT_SPOTLIGHT); 
@@ -195,19 +194,6 @@ void BasicTutorial_00::createScene_00(void)
 	light2 -> setDirection(Vector3(1.6, -1.6, -1));
 	light2 -> setDiffuseColour( 0.8, 0.8, 0.8 );		
 	light2 -> setSpecularColour( 0.3, 0.3, 0.3 );
-
-	// add your own stuff
-    /*
-    Radian angle(3.141952654/2.0);
-
-    Vector3 axis(1.0, 0.0, 0.0);
-    mSceneMgr
-		->getRootSceneNode()
-		->createChildSceneNode(
-            Vector3(0.0, 0.0, -750.0),
-            Quaternion( angle, axis))
-		->attachObject(ent);
-    */
 }
 
 void BasicTutorial_00::createScene_01(void) 
@@ -254,12 +240,10 @@ void BasicTutorial_00::createScene_01(void)
 	light1 -> setDirection(Vector3(-1, -1, -1));
 	light1 -> setDiffuseColour( 0.0, 0.0, 1.0 );		
 	light1 -> setSpecularColour( 0.0, 0.0, 1.0 );
-
-
 }
 
 void BasicTutorial_00::createViewports(void)
-{
+{   
     //Do not modify
 	createViewport_00();
 	createViewport_01();
@@ -298,8 +282,7 @@ bool BasicTutorial_00::keyPressed( const OIS::KeyEvent &arg )
     ss << arg.key;
     String msg;
     ss >> msg;
-    //msg += ":*** keyPressed ***\n";
-	msg += animationState;
+    msg += ":*** keyPressed ***\n";
     Ogre::LogManager::getSingletonPtr()->logMessage( msg );
 
     
@@ -410,7 +393,6 @@ bool BasicTutorial_00::keyPressed( const OIS::KeyEvent &arg )
           Ogre::Real(vp0->getActualWidth()) / Ogre::Real(vp0->getActualHeight()));
 	   mViewportArr[0] = vp0;
 
-
 	   mCamera = mCameraArr[1];
        Ogre::Viewport* vp1 = mWindow -> addViewport(mCamera);
        vp1 -> setBackgroundColour(Ogre::ColourValue(0,0.5,0));
@@ -458,14 +440,14 @@ bool BasicTutorial_00::keyPressed( const OIS::KeyEvent &arg )
 
 	if (arg.key == OIS::KC_P ) {
 	
-		if(animationState == "off") {
-			animationState = "on";
+		if(animation == "off") {
+			animation = "on";
 		}
-		else if (animationState == "on") {
-			animationState = "off";
+		else if (animation == "on") {
+			animation = "off";
 		}
 		else {
-			animationState = "off";
+			animation = "off";
 		}
 	}
     // Do not delete this line
@@ -490,35 +472,45 @@ bool BasicTutorial_00::keyReleased( const OIS::KeyEvent &arg )
     ss >> msg;
     msg += ":*** keyReleased ***\n";
     
-    Ogre::LogManager::getSingletonPtr()->logMessage( msg );
+    Ogre::LogManager::getSingletonPtr() -> logMessage( msg );
 
     BaseApplication::keyReleased(arg);
 
     return flg;
 }
 
-double mAngle = 0.0;
+
 bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt)
-{
+{   
 	bool flg = Ogre::FrameListener::frameStarted(evt);
-    //
-    // add your own stuff
-    //
-		double mRadius = 200.0;
-	if (animationState == "on") {
+	if (animation == "on") {
 		bigPNode -> lookAt(Vector3(smallPNode -> getPosition().x, 50, smallPNode -> getPosition().z), Node::TransformSpace::TS_WORLD, Ogre::Vector3::UNIT_Z);
-	    smallPNode -> lookAt(Vector3(bigPNode -> getPosition().x, 20, bigPNode -> getPosition().z), Node::TransformSpace::TS_WORLD, Ogre::Vector3::UNIT_Z);
-		Vector3 pos = smallPNode -> getPosition();
-		mAngle += (PI / 100);
-		if (mAngle > 2 * PI) {
-			mAngle = 0.0;
+		if (animationState == "state1") {
+			mWaitingTime += evt.timeSinceLastFrame;
+			if (mWaitingTime > 0.5) {
+				animationState = "state2";
+				mWaitingTime = 0.0;
+			}
 		}
-        pos.x = mRadius*cos(mAngle);
-        pos.z = mRadius*sin(mAngle);
-        smallPNode -> setPosition(pos); 
+		if (animationState == "state2") {
+	        smallPNode -> lookAt(Vector3(bigPNode -> getPosition().x, 20, bigPNode -> getPosition().z), Node::TransformSpace::TS_WORLD, Ogre::Vector3::UNIT_Z);
+		    Vector3 pos = smallPNode -> getPosition();
+			mAngularSpeed += mAngularAcceleration * evt.timeSinceLastFrame;
+		    mAngle += mAngularSpeed * evt.timeSinceLastFrame;
+		    if (mAngle > 2 * PI) {
+			    mAngle = 0.0;
+				mAngularSpeed = 0.0;
+				animationState = "state1";
+				mRotateDir *= -1;
+		    }
+            pos.x = mRadius*cos(mAngle);
+            pos.z = mRadius*sin(mAngle) * mRotateDir;
+            smallPNode -> setPosition(pos); 
+		}
 	}
     return flg;
 }
+
 int main(int argc, char *argv[]) {
 	BasicTutorial_00 app;
 	app.go();  
