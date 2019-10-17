@@ -305,59 +305,61 @@ bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButt
 	    	}
 	    }
 	 }
-	return BaseApplication::mouseReleased( arg, id );
+	 return BaseApplication::mouseReleased( arg, id );
 }
 
 bool BasicTutorial_00::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 {   
-	// Close all the bounding boxes of previous choose
-	for (int i = 0; i < mCurrentObjectVector.size(); i ++) {
-		mCurrentObjectVector[i]->showBoundingBox(false);
-	}
-	mCurrentObjectVector.clear();
-
-	if(mSingleChooseObject) {
-		 mSingleChooseObject->showBoundingBox(false);
-	}
-	Ray mRay = mTrayMgr->getCursorRay(mCamera);
-
-	Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
-	left = scn.x;
-	top = scn.y;
-	right = scn.x;
-	bottom = scn.y;
-	mSelectionRect->setCorners(left, top, right, bottom);
-	mSelectionRect->setVisible(true);
-
-	mSceneMgr = mSceneMgrArr[0];
-	RaySceneQuery *mRaySceneQuery = 
-		mSceneMgr->createRayQuery ( Ray() ); 
-	
-	mRaySceneQuery->setSortByDistance(true); 
-											  
-	mRaySceneQuery->setRay(mRay);
-	// Perform the scene query
-	RaySceneQueryResult &result = 
-		mRaySceneQuery->execute();
-	RaySceneQueryResult::iterator itr = result.begin();
-	
-	// Get the results, set the camera height
-	// We are interested in the first intersection. It is ok to traverse all the results.
-	for (itr = result.begin(); itr != result.end(); itr++)
-    {
-	    if (itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
-	    {
-		    mSingleChooseObject = itr->movable->getParentSceneNode();
-			// Don't choose the center sphere
-			if (mSingleChooseObject->getName() != "Sphere") {
-		        bool flgShow = mSingleChooseObject->getShowBoundingBox();
-		        mSingleChooseObject->showBoundingBox(!flgShow);
-		        break;
-			}
-	    } // if
-	    else if (itr->worldFragment) {
-		  //
-			
+	if (id == OIS::MB_Left) {
+	    // Close all the bounding boxes of previous choose
+	    for (int i = 0; i < mCurrentObjectVector.size(); i ++) {
+	    	mCurrentObjectVector[i]->showBoundingBox(false);
+	    }
+	    mCurrentObjectVector.clear();
+	    
+	    if(mSingleChooseObject) {
+	    	 mSingleChooseObject->showBoundingBox(false);
+	    }
+	    Ray mRay = mTrayMgr->getCursorRay(mCamera);
+	    
+	    Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
+	    left = scn.x;
+	    top = scn.y;
+	    right = scn.x;
+	    bottom = scn.y;
+	    mSelectionRect->setCorners(left, top, right, bottom);
+	    mSelectionRect->setVisible(true);
+	    
+	    mSceneMgr = mSceneMgrArr[0];
+	    RaySceneQuery *mRaySceneQuery = 
+	    	mSceneMgr->createRayQuery ( Ray() ); 
+	    
+	    mRaySceneQuery->setSortByDistance(true); 
+	    										  
+	    mRaySceneQuery->setRay(mRay);
+	    // Perform the scene query
+	    RaySceneQueryResult &result = 
+	    	mRaySceneQuery->execute();
+	    RaySceneQueryResult::iterator itr = result.begin();
+	    
+	    // Get the results, set the camera height
+	    // We are interested in the first intersection. It is ok to traverse all the results.
+	    for (itr = result.begin(); itr != result.end(); itr++)
+        {
+	        if (itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
+	        {
+	    	    mSingleChooseObject = itr->movable->getParentSceneNode();
+	    		// Don't choose the center sphere
+	    		if (mSingleChooseObject->getName() != "Sphere") {
+	    	        bool flgShow = mSingleChooseObject->getShowBoundingBox();
+	    	        mSingleChooseObject->showBoundingBox(!flgShow);
+	    	        break;
+	    		}
+	        } // if
+	        else if (itr->worldFragment) {
+	    	  //
+	    		
+	        }
 	    }
 	}
 	
