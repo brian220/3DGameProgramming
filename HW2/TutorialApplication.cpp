@@ -33,10 +33,11 @@ BasicTutorial_00::BasicTutorial_00(void) {
     mAngle = 0.0;
 	mAngularSpeed = 0.5;
 	mRadius = 1000.0;
+	mRobotSpeed = 50.0;
+	globalAnimationState = "Idle";
 }
 
-void BasicTutorial_00::chooseSceneManager()
-{   
+void BasicTutorial_00::chooseSceneManager() {   
 	ResourceGroupManager
 		::getSingleton()
 		.initialiseAllResourceGroups();
@@ -50,8 +51,7 @@ void BasicTutorial_00::chooseSceneManager()
     //
 }
 
-void BasicTutorial_00::createCamera_00(void)
-{
+void BasicTutorial_00::createCamera_00(void) {
 	mSceneMgr = mSceneMgrArr[0];
 	mCamera = mCameraArr[0] = mSceneMgr->createCamera("PlayerCam");
 	mCamera->setPosition(Ogre::Vector3(0,600,600));
@@ -60,15 +60,13 @@ void BasicTutorial_00::createCamera_00(void)
 	mCameraManArr[0] = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
 
-void BasicTutorial_00::createCamera_01(void)
-{
+void BasicTutorial_00::createCamera_01(void) {
 	// add your own stuff
 }
 
 
 
-void BasicTutorial_00::createViewport_00(void)
-{
+void BasicTutorial_00::createViewport_00(void) {
 	mCamera = mCameraArr[0];
 	// Create one viewport, entire window
     Ogre::Viewport* vp = mWindow -> addViewport(mCamera);
@@ -80,13 +78,11 @@ void BasicTutorial_00::createViewport_00(void)
         Ogre::Real(vp->getActualWidth()) / Ogre::Real(vp->getActualHeight()));
 }
 
-void BasicTutorial_00::createViewport_01(void)
-{
+void BasicTutorial_00::createViewport_01(void) {
     // add your own stuff
 }
 
-void BasicTutorial_00::createScene_00(void) 
-{
+void BasicTutorial_00::createScene_00(void) {
 	mSceneMgr = mSceneMgrArr[0];
 	mSceneMgr -> setAmbientLight(ColourValue(0.7, 0.7, 0.7));
 
@@ -115,11 +111,13 @@ void BasicTutorial_00::createScene_00(void)
 	    5,5, 		// x- and y-tiles
 	    Vector3::UNIT_Z	// upward vector
 	); 
+	mPlane = plane;
 
 	// Create ground
 	Entity* entGround = mSceneMgr->createEntity("GroundEntity", "ground");
 	SceneNode* groundNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-	groundNode->attachObject(entGround); 
+	groundNode->attachObject(entGround);
+	entGround->setQueryFlags(GROUND_MASK);
 	entGround->setCastShadows(false);
 	entGround->setMaterialName("Examples/Rocky");
 
@@ -129,9 +127,19 @@ void BasicTutorial_00::createScene_00(void)
 		std::string name;
 		genNameUsingIndex("robotC1", i, name);
 		Entity *entRobot = mSceneMgr->createEntity(name, "robot.mesh");
+		entRobot->setQueryFlags(ROBOT_MASK);
 		entRobot->setCastShadows(true);
+
 		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		robotNode -> attachObject(entRobot);
+		robotNode->attachObject(entRobot);
+		
+		//Set Idle animation for each robot
+		AnimationState *mAnimationState;
+        mAnimationState = entRobot->getAnimationState("Idle");
+        mAnimationState->setLoop(true);
+        mAnimationState->setEnabled(true);
+		mAnimationStateVector.push_back(mAnimationState);
+
 	    double fx = i / (double) (numRobots - 1); // in range [0,1]
         double radius = 300;
         double x1 = radius * cos(fx * PI * 2);
@@ -140,7 +148,6 @@ void BasicTutorial_00::createScene_00(void)
 			robotNode->scale(2, 2, 2);
 		}
 		robotNode -> setPosition(x1, 0, z1);
-
 	}
 
 	// Create a circle of robots
@@ -151,6 +158,14 @@ void BasicTutorial_00::createScene_00(void)
 		entRobot->setCastShadows(true);
 		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 		robotNode -> attachObject(entRobot);
+
+		//Set Idle animation for each robot
+		AnimationState *mAnimationState;
+        mAnimationState = entRobot->getAnimationState("Idle");
+        mAnimationState->setLoop(true);
+        mAnimationState->setEnabled(true);
+		mAnimationStateVector.push_back(mAnimationState);
+
 	    double fx = i / (double) (numRobots - 1); // in range [0,1]
         double radius = 200;
         double x1 = radius * cos(fx * PI * 2);
@@ -160,6 +175,7 @@ void BasicTutorial_00::createScene_00(void)
 
 	// Create Center sphere
 	Entity *entSphere = mSceneMgr->createEntity("egg", "sphere.mesh");
+	entSphere->setQueryFlags(SPHERE_MASK);
     entSphere->setCastShadows(true);
 	SceneNode *sphereNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Sphere", Vector3(0, 0, 0));
 	sphereNode->attachObject(entSphere);
@@ -187,13 +203,11 @@ void BasicTutorial_00::createScene_00(void)
 	mVolQuery = mSceneMgr->createPlaneBoundedVolumeQuery(volList);
 }
 
-void BasicTutorial_00::createScene_01(void) 
-{
+void BasicTutorial_00::createScene_01(void) {
     // add your own stuff
 }
 
-void BasicTutorial_00::createViewports(void)
-{
+void BasicTutorial_00::createViewports(void) {
     //Do not modify
 	createViewport_00();
 	createViewport_01();
@@ -218,8 +232,60 @@ void BasicTutorial_00::createScene( void ) {
     //mCamera = mCameraArr[1];
 }
 
-bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt)
-{
+bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {   
+	// For robot animation
+	for(int i = 0; i < mAnimationStateVector.size(); i ++) {
+		mAnimationStateVector[i]->addTime(evt.timeSinceLastFrame);
+	}
+
+	if (globalAnimationState == "Walk") {
+		for(int i = 0; i < mCurrentObjectVector.size();) {
+			// Get the animationState of robots from scene nodes
+			Entity* entRobot = static_cast<Entity*>(mCurrentObjectVector[i]->getAttachedObject(0));
+			AnimationState *mAnimationState;
+			mAnimationState = entRobot->getAnimationState("Walk");
+            mAnimationState->setLoop(true);
+            mAnimationState->setEnabled(true);
+			mAnimationState->addTime(evt.timeSinceLastFrame);
+			
+			// Let the robots face to the target position by quaternion
+			Vector3 mDirection = targetPosition - mCurrentObjectVector[i]->getPosition();
+			Vector3 src = mCurrentObjectVector[i]->getOrientation() * Vector3::UNIT_X;
+			// Special case for turning degree 180,
+			// It may throw devide by zero error if we don't use this special case
+			src.y = 0;
+			mDirection.y = 0;
+			src.normalise();
+			Real mDistance = mDirection.normalise();
+			if ((1.0 + src.dotProduct(mDirection)) < 0.0001) {
+                mCurrentObjectVector[i]->yaw(Ogre::Degree(180));
+            }
+            else {
+                Ogre::Quaternion quat = src.getRotationTo(mDirection);
+                mCurrentObjectVector[i]->rotate(quat);
+            }
+
+			// Move the robots to the direction
+            Ogre::Real move = mRobotSpeed * evt.timeSinceLastFrame;
+            mDistance -= move;
+			if (mDistance <= 0) {
+                mCurrentObjectVector[i]->setPosition(targetPosition);
+				mCurrentObjectVector[i]->showBoundingBox(false);
+			    AnimationState *mAnimationState;
+			    mAnimationState = entRobot->getAnimationState("Idle");
+                mAnimationState->setLoop(true);
+                mAnimationState->setEnabled(true);
+			    mAnimationState->addTime(evt.timeSinceLastFrame);
+				mCurrentObjectVector.erase(mCurrentObjectVector.begin() + i);
+			}
+			else {
+				mCurrentObjectVector[i]->translate(move * mDirection);
+				i ++;
+			}
+		}
+	}
+
+	// For light animation
 	bool flg = Ogre::FrameListener::frameStarted(evt);
     mAngle += mAngularSpeed * evt.timeSinceLastFrame;
     if (mAngle > 2 * PI) mAngle = 0.0;
@@ -230,8 +296,7 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt)
     return flg;
 }
 
-bool BasicTutorial_00::mouseMoved( const OIS::MouseEvent &arg )
-{   
+bool BasicTutorial_00::mouseMoved( const OIS::MouseEvent &arg ) {   
 	Ray mRay =mTrayMgr->getCursorRay(mCamera);
 	Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
 	left = scn.x;
@@ -241,8 +306,7 @@ bool BasicTutorial_00::mouseMoved( const OIS::MouseEvent &arg )
     return BaseApplication::mouseMoved( arg);
 }
 
-bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
-{   
+bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id ) {   
 	// IF mouse left button is released
     if (id == OIS::MB_Left) {
 	    mSelectionRect->setVisible(false);
@@ -283,10 +347,12 @@ bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButt
 	    
 	    PlaneBoundedVolumeList volList;
 	    volList.push_back(vol);
+
 	    mVolQuery->setVolumes(volList);
-	    
+		// Only select robots
+		mVolQuery->setQueryMask(ROBOT_MASK);
+
 	    SceneQueryResult result = mVolQuery->execute();
-	    
 	    SceneQueryResultMovableList::iterator itr = result.movables.begin();
 	    
 	    // Get the results, set the camera height
@@ -296,75 +362,99 @@ bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButt
 	    	if (*itr)
 	    	{
 	    		SceneNode* currentObject = (*itr)->getParentSceneNode();
-	    		// Don't choose the center sphere
-	    		if (currentObject->getName() != "Sphere") {
-	    		    bool flgShow = currentObject->getShowBoundingBox();
-	    		    currentObject->showBoundingBox(!flgShow);
-	    		    mCurrentObjectVector.push_back(currentObject);
-	    		}
+	    		bool flgShow = currentObject->getShowBoundingBox();
+	    		currentObject->showBoundingBox(!flgShow);
+	    		mCurrentObjectVector.push_back(currentObject);
 	    	}
 	    }
 	 }
 	 return BaseApplication::mouseReleased( arg, id );
 }
 
+void BasicTutorial_00::mouseReleasedLeftButtonEvent() 
+{
+
+}
+
+void BasicTutorial_00::mouseReleasedRightButtonEvent() 
+{
+
+}
+
 bool BasicTutorial_00::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 {   
 	if (id == OIS::MB_Left) {
-	    // Close all the bounding boxes of previous choose
-	    for (int i = 0; i < mCurrentObjectVector.size(); i ++) {
-	    	mCurrentObjectVector[i]->showBoundingBox(false);
-	    }
-	    mCurrentObjectVector.clear();
-	    
-	    if(mSingleChooseObject) {
-	    	 mSingleChooseObject->showBoundingBox(false);
-	    }
-	    Ray mRay = mTrayMgr->getCursorRay(mCamera);
-	    
-	    Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
-	    left = scn.x;
-	    top = scn.y;
-	    right = scn.x;
-	    bottom = scn.y;
-	    mSelectionRect->setCorners(left, top, right, bottom);
-	    mSelectionRect->setVisible(true);
-	    
-	    mSceneMgr = mSceneMgrArr[0];
-	    RaySceneQuery *mRaySceneQuery = 
-	    	mSceneMgr->createRayQuery ( Ray() ); 
-	    
-	    mRaySceneQuery->setSortByDistance(true); 
-	    										  
-	    mRaySceneQuery->setRay(mRay);
-	    // Perform the scene query
-	    RaySceneQueryResult &result = 
-	    	mRaySceneQuery->execute();
-	    RaySceneQueryResult::iterator itr = result.begin();
-	    
-	    // Get the results, set the camera height
-	    // We are interested in the first intersection. It is ok to traverse all the results.
-	    for (itr = result.begin(); itr != result.end(); itr++)
-        {
-	        if (itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
-	        {
-	    	    mSingleChooseObject = itr->movable->getParentSceneNode();
-	    		// Don't choose the center sphere
-	    		if (mSingleChooseObject->getName() != "Sphere") {
-	    	        bool flgShow = mSingleChooseObject->getShowBoundingBox();
-	    	        mSingleChooseObject->showBoundingBox(!flgShow);
-	    	        break;
-	    		}
-	        } // if
-	        else if (itr->worldFragment) {
-	    	  //
-	    		
-	        }
-	    }
+	   mousePressedLeftButtonEvent();
 	}
-	
+	if (id == OIS::MB_Right) {
+	   mousePressedRightButtonEvent();
+	}
 	return BaseApplication::mousePressed( arg, id );
 }
+
+void BasicTutorial_00::mousePressedLeftButtonEvent() 
+{   
+	globalAnimationState = "Idle";
+
+	// Close all the bounding boxes of previous choose
+	for (int i = 0; i < mCurrentObjectVector.size(); i ++) {
+		mCurrentObjectVector[i]->showBoundingBox(false);
+	}
+	mCurrentObjectVector.clear();
+	
+	if(mSingleChooseObject) {
+		 mSingleChooseObject->showBoundingBox(false);
+	}
+
+	Ray mRay = mTrayMgr->getCursorRay(mCamera);
+	Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
+	left = scn.x;
+	top = scn.y;
+	right = scn.x;
+	bottom = scn.y;
+	mSelectionRect->setCorners(left, top, right, bottom);
+	mSelectionRect->setVisible(true);
+	
+	mSceneMgr = mSceneMgrArr[0];
+	RaySceneQuery *mRaySceneQuery = 
+		mSceneMgr->createRayQuery ( Ray() ); 
+	
+	mRaySceneQuery->setSortByDistance(true); 
+											  
+	mRaySceneQuery->setRay(mRay);
+	// Perform the scene query
+	RaySceneQueryResult &result = 
+		mRaySceneQuery->execute();
+	RaySceneQueryResult::iterator itr = result.begin();
+	
+	// Get the results, set the camera height
+	// We are interested in the first intersection. It is ok to traverse all the results.
+	for (itr = result.begin(); itr != result.end(); itr++)
+    {
+	    if (itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
+	    {
+		    mSingleChooseObject = itr->movable->getParentSceneNode();
+			// Don't choose the center sphere
+			if (mSingleChooseObject->getName() != "Sphere") {
+		        bool flgShow = mSingleChooseObject->getShowBoundingBox();
+		        mSingleChooseObject->showBoundingBox(!flgShow);
+		        break;
+			}
+	    }
+	}
+}
+
+void BasicTutorial_00::mousePressedRightButtonEvent() 
+{
+	globalAnimationState = "Walk";
+
+	Ray mRay =mTrayMgr->getCursorRay(mCamera);
+	std::pair<bool,Real> result = mRay.intersects(mPlane);
+	if (result.first == true) {
+		targetPosition = mRay.getPoint(result.second);
+	}
+}
+
 
 int main(int argc, char *argv[]) {
 	BasicTutorial_00 app;

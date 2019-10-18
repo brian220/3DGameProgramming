@@ -26,6 +26,7 @@ This is an assignment of 3D Game Programming
 #include "BaseApplication.h"
 #include "selection_rectangle.h"
 #include <vector>
+#include <string>
 
 class BasicTutorial_00 : public BaseApplication
 {
@@ -42,6 +43,12 @@ public:
 	virtual bool mouseMoved( const OIS::MouseEvent &arg );
 	virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
 	virtual bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+
+	void mouseReleasedLeftButtonEvent();
+	void mouseReleasedRightButtonEvent();
+
+	void mousePressedLeftButtonEvent();
+	void mousePressedRightButtonEvent();
     //
     // Add your own stuff.
     //
@@ -67,6 +74,8 @@ protected:
 	Ogre::Camera* mCameraArr[8];
 	Ogre::SceneManager* mSceneMgrArr[8];
 	OgreBites::SdkCameraMan* mCameraManArr[8];
+	Ogre::Plane mPlane;
+
 	std::vector <Ogre::SceneNode*> mCurrentObjectVector;
 	Ogre::SceneNode* mSingleChooseObject;
 	Ogre::Light* light1;
@@ -77,9 +86,30 @@ protected:
 	//! The raduis of the rotation orbit of the light
 	double mRadius;
 
+	//! The speed of robots' moving
+	double mRobotSpeed;
+
 	PlaneBoundedVolumeListSceneQuery *mVolQuery;
 	Real left, top, right, bottom;
 	SelectionRectangle *mSelectionRect;
+
+	//! The mask for the query selection
+	enum QueryFlags 
+	{
+	    ROBOT_MASK = 1 << 0,
+		SPHERE_MASK = 1 << 1,
+		GROUND_MASK = 1 << 2
+	};
+
+	//! Store the animation state for each robot
+	std::vector <Ogre::AnimationState*> mAnimationStateVector;
+
+	//! Target position for robots moving
+	Ogre::Vector3 targetPosition;
+
+	//! Animation State for all the robots
+	std::string globalAnimationState;
+
 };
 
 
