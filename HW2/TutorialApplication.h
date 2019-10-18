@@ -36,8 +36,7 @@ public:
     virtual void createCamera(void);
 	virtual void createViewports(void);
 	virtual void createScene(void);
-	
-	
+
     //
     virtual bool frameStarted(const Ogre::FrameEvent& evt);
 	virtual bool mouseMoved( const OIS::MouseEvent &arg );
@@ -49,6 +48,10 @@ public:
 
 	void mousePressedLeftButtonEvent();
 	void mousePressedRightButtonEvent();
+
+	//!For collision detection
+	bool isCollidedByRobots(SceneNode* currentNode, double collideRadius);
+	//bool isCollisionBetweenRobots(SceneNode* currentNode);
     //
     // Add your own stuff.
     //
@@ -75,9 +78,10 @@ protected:
 	Ogre::SceneManager* mSceneMgrArr[8];
 	OgreBites::SdkCameraMan* mCameraManArr[8];
 	Ogre::Plane mPlane;
+	Ogre::SceneNode* mCenterSphere;
 
 	std::vector <Ogre::SceneNode*> mCurrentObjectVector;
-	Ogre::SceneNode* mSingleChooseObject;
+	//Ogre::SceneNode* mSingleChooseObject;
 	Ogre::Light* light1;
 	//! The rotation angle of the light
 	double mAngle;
@@ -101,6 +105,8 @@ protected:
 		GROUND_MASK = 1 << 2
 	};
 
+	double mAnimationSpeedUp;
+
 	//! Store the animation state for each robot
 	std::vector <Ogre::AnimationState*> mAnimationStateVector;
 
@@ -110,6 +116,9 @@ protected:
 	//! Animation State for all the robots
 	std::string globalAnimationState;
 
+	Ogre::Vector3 mCurrentBounceBackDirection;
+
+	Ogre::Real mCurrentMove;
 };
 
 

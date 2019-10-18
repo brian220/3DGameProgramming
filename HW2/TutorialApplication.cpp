@@ -33,7 +33,8 @@ BasicTutorial_00::BasicTutorial_00(void) {
     mAngle = 0.0;
 	mAngularSpeed = 0.5;
 	mRadius = 1000.0;
-	mRobotSpeed = 50.0;
+	mRobotSpeed = 45.0;
+	mAnimationSpeedUp = 2.0;
 	globalAnimationState = "Idle";
 }
 
@@ -122,7 +123,7 @@ void BasicTutorial_00::createScene_00(void) {
 	entGround->setMaterialName("Examples/Rocky");
 
 	// Create a circle of robots
-    int numRobots = 36;
+    int numRobots = 10;
 	for (int i = 0; i < numRobots; i ++) {
 		std::string name;
 		genNameUsingIndex("robotC1", i, name);
@@ -140,7 +141,7 @@ void BasicTutorial_00::createScene_00(void) {
         mAnimationState->setEnabled(true);
 		mAnimationStateVector.push_back(mAnimationState);
 
-	    double fx = i / (double) (numRobots - 1); // in range [0,1]
+	    double fx = i / (double)numRobots; // in range [0,1]
         double radius = 300;
         double x1 = radius * cos(fx * PI * 2);
         double z1 = radius * sin(fx * PI * 2);
@@ -166,7 +167,7 @@ void BasicTutorial_00::createScene_00(void) {
         mAnimationState->setEnabled(true);
 		mAnimationStateVector.push_back(mAnimationState);
 
-	    double fx = i / (double) (numRobots - 1); // in range [0,1]
+	    double fx = i / (double)numRobots; // in range [0,1]
         double radius = 200;
         double x1 = radius * cos(fx * PI * 2);
         double z1 = radius * sin(fx * PI * 2);
@@ -183,7 +184,7 @@ void BasicTutorial_00::createScene_00(void) {
 	double sphereSize = bb.getMaximum().x-bb.getMinimum().x;
 	double sphereScaling = 70.0/sphereSize;
 	sphereNode->scale(sphereScaling, sphereScaling, sphereScaling);
-	mSingleChooseObject = sphereNode;
+	mCenterSphere = sphereNode;
 
 	// Create light
     light1 = mSceneMgr -> createLight("Light1");
@@ -235,7 +236,7 @@ void BasicTutorial_00::createScene( void ) {
 bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {   
 	// For robot animation
 	for(int i = 0; i < mAnimationStateVector.size(); i ++) {
-		mAnimationStateVector[i]->addTime(evt.timeSinceLastFrame);
+		mAnimationStateVector[i]->addTime(evt.timeSinceLastFrame * mAnimationSpeedUp);
 	}
 
 	if (globalAnimationState == "Walk") {
@@ -246,7 +247,7 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 			mAnimationState = entRobot->getAnimationState("Walk");
             mAnimationState->setLoop(true);
             mAnimationState->setEnabled(true);
-			mAnimationState->addTime(evt.timeSinceLastFrame);
+			mAnimationState->addTime(evt.timeSinceLastFrame * mAnimationSpeedUp);
 			
 			// Let the robots face to the target position by quaternion
 			Vector3 mDirection = targetPosition - mCurrentObjectVector[i]->getPosition();
@@ -267,6 +268,7 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 
 			// Move the robots to the direction
             Ogre::Real move = mRobotSpeed * evt.timeSinceLastFrame;
+			mCurrentMove = move;
             mDistance -= move;
 			if (mDistance <= 0) {
                 mCurrentObjectVector[i]->setPosition(targetPosition);
@@ -275,11 +277,15 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 			    mAnimationState = entRobot->getAnimationState("Idle");
                 mAnimationState->setLoop(true);
                 mAnimationState->setEnabled(true);
-			    mAnimationState->addTime(evt.timeSinceLastFrame);
+			    mAnimationState->addTime(evt.timeSinceLastFrame * mAnimationSpeedUp);
 				mCurrentObjectVector.erase(mCurrentObjectVector.begin() + i);
 			}
-			else {
+			else if (!isCollidedByRobots(mCurrentObjectVector[i], 10) && !isCollidedByRobots(mCenterSphere, 20)){
 				mCurrentObjectVector[i]->translate(move * mDirection);
+				i ++;
+			}
+			else {
+				mCurrentObjectVector[i]->translate(move * mCurrentBounceBackDirection);
 				i ++;
 			}
 		}
@@ -295,6 +301,32 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 	light1 -> setDirection(Vector3(-x, -500, -z));
     return flg;
 }
+
+bool BasicTutorial_00::isCollidedByRobots(SceneNode* currentNode, double radius) {
+	bool collide = false;
+	mSceneMgr = mSceneMgrArr[0];
+	SphereSceneQuery* mSphereSceneQuery = 
+		mSceneMgr->createSphereQuery(Sphere(currentNode->getPosition(), radius));
+	 mSphereSceneQuery->setQueryMask(ROBOT_MASK);
+	// Start the sphere query
+    SceneQueryResult result = mSphereSceneQuery->execute();
+	SceneQueryResultMovableList::iterator itr = result.movables.begin();
+	for (itr = result.movables.begin(); itr != result.movables.end(); ++itr) {
+	    if ((*itr)->getParentSceneNode()->getName() != currentNode->getName())
+	    {
+			SceneNode* collideNode = (*itr)->getParentSceneNode();
+			Vector3 collideVector = currentNode->getPosition() - collideNode->getPosition();
+			collideVector.y = 0.0;
+			mCurrentBounceBackDirection += collideVector;
+			collideVector.normalise();
+			collideNode->translate(mCurrentMove * collideVector * -1.0);
+	    	collide = true;
+	    }
+	}
+	mCurrentBounceBackDirection.normalise(); 
+	return collide;
+}
+
 
 bool BasicTutorial_00::mouseMoved( const OIS::MouseEvent &arg ) {   
 	Ray mRay =mTrayMgr->getCursorRay(mCamera);
@@ -314,6 +346,12 @@ bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButt
 	    	return BaseApplication::mouseReleased( arg, id );
 	    }
 	    
+		// Close all the bounding boxes of previous choose
+	    for (int i = 0; i < mCurrentObjectVector.size(); i ++) {
+		    mCurrentObjectVector[i]->showBoundingBox(false);
+	    }
+	    mCurrentObjectVector.clear();
+
 	    //USING mTrayMgr=============
 	    Real nleft = left;
 	    Real nright = right;
@@ -401,12 +439,10 @@ void BasicTutorial_00::mousePressedLeftButtonEvent()
 		mCurrentObjectVector[i]->showBoundingBox(false);
 	}
 	mCurrentObjectVector.clear();
-	
-	if(mSingleChooseObject) {
-		 mSingleChooseObject->showBoundingBox(false);
-	}
 
 	Ray mRay = mTrayMgr->getCursorRay(mCamera);
+
+	// Set the choosing rectangle edge points
 	Vector2 scn = mTrayMgr->sceneToScreen(mCamera, mRay.getOrigin());
 	left = scn.x;
 	top = scn.y;
@@ -418,10 +454,12 @@ void BasicTutorial_00::mousePressedLeftButtonEvent()
 	mSceneMgr = mSceneMgrArr[0];
 	RaySceneQuery *mRaySceneQuery = 
 		mSceneMgr->createRayQuery ( Ray() ); 
-	
-	mRaySceneQuery->setSortByDistance(true); 
-											  
+
+	// Only select robots
+	mRaySceneQuery->setQueryMask(ROBOT_MASK);
+	mRaySceneQuery->setSortByDistance(true); 							  
 	mRaySceneQuery->setRay(mRay);
+
 	// Perform the scene query
 	RaySceneQueryResult &result = 
 		mRaySceneQuery->execute();
@@ -433,13 +471,11 @@ void BasicTutorial_00::mousePressedLeftButtonEvent()
     {
 	    if (itr->movable && itr->movable->getName().substr(0, 5) != "tile[")
 	    {
-		    mSingleChooseObject = itr->movable->getParentSceneNode();
-			// Don't choose the center sphere
-			if (mSingleChooseObject->getName() != "Sphere") {
-		        bool flgShow = mSingleChooseObject->getShowBoundingBox();
-		        mSingleChooseObject->showBoundingBox(!flgShow);
-		        break;
-			}
+			SceneNode* currentObject = itr->movable->getParentSceneNode();
+	    	bool flgShow = currentObject->getShowBoundingBox();
+	    	currentObject->showBoundingBox(!flgShow);
+	    	mCurrentObjectVector.push_back(currentObject);
+			break;
 	    }
 	}
 }
