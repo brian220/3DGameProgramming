@@ -47,27 +47,25 @@ void BasicTutorial_00::chooseSceneManager() {
 
 	mSceneMgrArr[0] = mRoot
 		->createSceneManager(ST_GENERIC, "primary");
-	//mSceneMgrArr[1] = mRoot
-	//	->createSceneManager(ST_GENERIC, "secondary");
-    //
-    // add your own stuff
-    //
 }
 
 void BasicTutorial_00::createCamera_00(void) {
 	mSceneMgr = mSceneMgrArr[0];
-	mCamera = mCameraArr[0] = mSceneMgr->createCamera("PlayerCam");
-	mCamera->setPosition(Ogre::Vector3(0,600,600));
+	mCamera = mCameraArr[0] = mSceneMgr->createCamera("PlayerCam00");
+	mCamera->setPosition(Ogre::Vector3(0, 700, 700));
 	mCamera->lookAt(Ogre::Vector3(0,0,0));
 	mCamera->setNearClipDistance(5);
 	mCameraManArr[0] = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
 
 void BasicTutorial_00::createCamera_01(void) {
-	// add your own stuff
+	mSceneMgr = mSceneMgrArr[0];
+	mCamera = mCameraArr[1] = mSceneMgr->createCamera("PlayerCam01");
+	mCamera->setPosition(Ogre::Vector3(0, 1400,0.1));
+	mCamera->lookAt(Ogre::Vector3(0,0,0));
+	mCamera->setNearClipDistance(5);
+	mCameraManArr[1] = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
-
-
 
 void BasicTutorial_00::createViewport_00(void) {
 	mCamera = mCameraArr[0];
@@ -82,12 +80,22 @@ void BasicTutorial_00::createViewport_00(void) {
 }
 
 void BasicTutorial_00::createViewport_01(void) {
-    // add your own stuff
+    mCamera = mCameraArr[1];
+	// Create one viewport, entire window
+    Ogre::Viewport* vp = mWindow -> addViewport(mCamera, 1, 0.0, 0.0, 0.25, 0.25);
+    vp->setBackgroundColour(Ogre::ColourValue(1.0, 1.0, 0));
+	vp->setSkiesEnabled(false);
+	vp->setOverlaysEnabled(false);
+	mViewportArr[1] = vp;
+	
+    // Alter the camera aspect ratio to match the viewport
+    mCamera->setAspectRatio(
+         ((Ogre::Real)4 * Ogre::Real(vp->getActualWidth())) / Ogre::Real(vp->getActualHeight()));
 }
 
 void BasicTutorial_00::createScene_00(void) {
 	mSceneMgr = mSceneMgrArr[0];
-	mSceneMgr -> setAmbientLight(ColourValue(0.8, 0.8, 0.8));
+	mSceneMgr->setAmbientLight(ColourValue(0.8, 0.8, 0.8));
 
 	// Enable fog
 	Ogre::ColourValue fadeColour(0.9, 0.9, 0.9);
@@ -145,7 +153,7 @@ void BasicTutorial_00::createScene_00(void) {
 
 		//Apply particle system on the robot
 		std::string particleName = "particle_" +  nodeName;
-		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/JetEngine1");
+		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/Aureola");
 		SceneNode* robotParticle = robotNode->createChildSceneNode(nodeName +"child");
 		robotParticle->attachObject(particle);
 
@@ -180,7 +188,7 @@ void BasicTutorial_00::createScene_00(void) {
 
 		//Apply particle system on the robot
 		std::string particleName = "particle_" +  nodeName;
-		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/JetEngine1");
+		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/JetEngine2");
 		SceneNode* robotParticle = robotNode->createChildSceneNode(nodeName +"child");
 		robotParticle->attachObject(particle);
 
