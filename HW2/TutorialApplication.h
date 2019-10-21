@@ -25,6 +25,8 @@ This is an assignment of 3D Game Programming
 
 #include "BaseApplication.h"
 #include "selection_rectangle.h"
+#include "sound.h"
+
 #include <vector>
 #include <string>
 
@@ -42,6 +44,7 @@ public:
 	virtual bool mouseMoved( const OIS::MouseEvent &arg );
 	virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
 	virtual bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
+	virtual bool keyPressed( const OIS::KeyEvent &arg );
 
 	void mouseReleasedLeftButtonEvent();
 	void mouseReleasedRightButtonEvent();
@@ -51,7 +54,7 @@ public:
 
 	//!For collision detection
 	bool isCollidedByRobots(SceneNode* currentNode, double collideRadius);
-	//bool isCollisionBetweenRobots(SceneNode* currentNode);
+	
     //
     // Add your own stuff.
     //
@@ -79,24 +82,22 @@ protected:
 	OgreBites::SdkCameraMan* mCameraManArr[8];
 	Ogre::Plane mPlane;
 	Ogre::SceneNode* mCenterSphere;
-
-	std::vector <Ogre::SceneNode*> mCurrentObjectVector;
-	//Ogre::SceneNode* mSingleChooseObject;
 	Ogre::Light* light1;
+	std::vector <Ogre::SceneNode*> mRobotNodeVector;
+	
+
 	//! The rotation angle of the light
 	double mAngle;
 	//! The rotation angular speed of the light
 	double mAngularSpeed;
 	//! The raduis of the rotation orbit of the light
 	double mRadius;
-
-	//! The speed of robots' moving
-	double mRobotSpeed;
-
+	
+	//! Store the scene nodes of the robots' choosed by rectangle 
+	std::vector <Ogre::SceneNode*> mCurrentObjectVector;
 	PlaneBoundedVolumeListSceneQuery *mVolQuery;
 	Real left, top, right, bottom;
 	SelectionRectangle *mSelectionRect;
-
 	//! The mask for the query selection
 	enum QueryFlags 
 	{
@@ -104,21 +105,31 @@ protected:
 		SPHERE_MASK = 1 << 1,
 		GROUND_MASK = 1 << 2
 	};
-
-	double mAnimationSpeedUp;
-
-	//! Store the animation state for each robot
-	std::vector <Ogre::AnimationState*> mAnimationStateVector;
-
-	//! Target position for robots moving
-	Ogre::Vector3 targetPosition;
-
+	
 	//! Animation State for all the robots
 	std::string globalAnimationState;
 
+	//! Store the animation state for each robot
+	std::vector <Ogre::AnimationState*> mAnimationStateVector;
+	
+	//! The speed of robots' moving
+	Ogre::Real mRobotSpeed;
+	//! The speed up parameter of the robot's animation
+	Ogre::Real mAnimationSpeedUp;
+	
+	//! Target position for robots moving
+	Ogre::Vector3 targetPosition;
+	//! The vector of collision bounce back
 	Ogre::Vector3 mCurrentBounceBackDirection;
+	//! The move to compute the bounce back speed of the robots
+	Ogre::Real mMove;
 
-	Ogre::Real mCurrentMove;
+	Ogre::String particleSystemState;
+
+	SOUND* mSound;
+	//! The distance that the sound start playing sound
+	Real mNearDistance;
+
 };
 
 

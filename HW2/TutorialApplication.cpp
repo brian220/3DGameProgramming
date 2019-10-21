@@ -16,6 +16,7 @@
 
 #include "TutorialApplication.h"
 #include "BasicTools.h"
+#include "sound.h"
 
 #include <iostream>
 #include <sstream>
@@ -26,7 +27,6 @@
 using namespace std;
 using namespace Ogre;
 
-
 const float PI = 3.141592654;
 
 BasicTutorial_00::BasicTutorial_00(void) {
@@ -36,6 +36,8 @@ BasicTutorial_00::BasicTutorial_00(void) {
 	mRobotSpeed = 45.0;
 	mAnimationSpeedUp = 2.0;
 	globalAnimationState = "Idle";
+	particleSystemState = "on";
+	mNearDistance = 20.0;
 }
 
 void BasicTutorial_00::chooseSceneManager() {   
@@ -85,7 +87,7 @@ void BasicTutorial_00::createViewport_01(void) {
 
 void BasicTutorial_00::createScene_00(void) {
 	mSceneMgr = mSceneMgrArr[0];
-	mSceneMgr -> setAmbientLight(ColourValue(0.7, 0.7, 0.7));
+	mSceneMgr -> setAmbientLight(ColourValue(0.8, 0.8, 0.8));
 
 	// Enable fog
 	Ogre::ColourValue fadeColour(0.9, 0.9, 0.9);
@@ -130,8 +132,8 @@ void BasicTutorial_00::createScene_00(void) {
 		Entity *entRobot = mSceneMgr->createEntity(name, "robot.mesh");
 		entRobot->setQueryFlags(ROBOT_MASK);
 		entRobot->setCastShadows(true);
-
-		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+		std::string nodeName = name + "node";
+		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode(nodeName);
 		robotNode->attachObject(entRobot);
 		
 		//Set Idle animation for each robot
@@ -141,6 +143,12 @@ void BasicTutorial_00::createScene_00(void) {
         mAnimationState->setEnabled(true);
 		mAnimationStateVector.push_back(mAnimationState);
 
+		//Apply particle system on the robot
+		std::string particleName = "particle_" +  nodeName;
+		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/JetEngine1");
+		SceneNode* robotParticle = robotNode->createChildSceneNode(nodeName +"child");
+		robotParticle->attachObject(particle);
+
 	    double fx = i / (double)numRobots; // in range [0,1]
         double radius = 300;
         double x1 = radius * cos(fx * PI * 2);
@@ -149,6 +157,7 @@ void BasicTutorial_00::createScene_00(void) {
 			robotNode->scale(2, 2, 2);
 		}
 		robotNode -> setPosition(x1, 0, z1);
+		mRobotNodeVector.push_back(robotParticle);
 	}
 
 	// Create a circle of robots
@@ -156,9 +165,11 @@ void BasicTutorial_00::createScene_00(void) {
 		std::string name;
 		genNameUsingIndex("robotC2", i, name);
 		Entity *entRobot = mSceneMgr->createEntity(name, "robot.mesh");
+		entRobot->setQueryFlags(ROBOT_MASK);
 		entRobot->setCastShadows(true);
-		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
-		robotNode -> attachObject(entRobot);
+		std::string nodeName = name + "node";
+		SceneNode *robotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode(nodeName);
+		robotNode->attachObject(entRobot);
 
 		//Set Idle animation for each robot
 		AnimationState *mAnimationState;
@@ -167,11 +178,18 @@ void BasicTutorial_00::createScene_00(void) {
         mAnimationState->setEnabled(true);
 		mAnimationStateVector.push_back(mAnimationState);
 
+		//Apply particle system on the robot
+		std::string particleName = "particle_" +  nodeName;
+		ParticleSystem* particle = mSceneMgr->createParticleSystem(particleName, "Examples/JetEngine1");
+		SceneNode* robotParticle = robotNode->createChildSceneNode(nodeName +"child");
+		robotParticle->attachObject(particle);
+
 	    double fx = i / (double)numRobots; // in range [0,1]
         double radius = 200;
         double x1 = radius * cos(fx * PI * 2);
         double z1 = radius * sin(fx * PI * 2);
 	    robotNode -> setPosition(x1, 0, z1);
+		mRobotNodeVector.push_back(robotParticle);
 	}
 
 	// Create Center sphere
@@ -202,6 +220,10 @@ void BasicTutorial_00::createScene_00(void) {
 	// Create volume
 	PlaneBoundedVolumeList volList;
 	mVolQuery = mSceneMgr->createPlaneBoundedVolumeQuery(volList);
+
+	// Create sound
+	 mSound = new SOUND();
+	 mSound->init();
 }
 
 void BasicTutorial_00::createScene_01(void) {
@@ -233,13 +255,15 @@ void BasicTutorial_00::createScene( void ) {
     //mCamera = mCameraArr[1];
 }
 
-bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {   
+bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 	// For robot animation
 	for(int i = 0; i < mAnimationStateVector.size(); i ++) {
 		mAnimationStateVector[i]->addTime(evt.timeSinceLastFrame * mAnimationSpeedUp);
 	}
 
 	if (globalAnimationState == "Walk") {
+		bool playSound = false;
+		mNearDistance = 15.0 * mCurrentObjectVector.size();
 		for(int i = 0; i < mCurrentObjectVector.size();) {
 			// Get the animationState of robots from scene nodes
 			Entity* entRobot = static_cast<Entity*>(mCurrentObjectVector[i]->getAttachedObject(0));
@@ -268,8 +292,8 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 
 			// Move the robots to the direction
             Ogre::Real move = mRobotSpeed * evt.timeSinceLastFrame;
-			mCurrentMove = move;
-            mDistance -= move;
+			mMove = move;
+            mDistance -= move; 
 			if (mDistance <= 0) {
                 mCurrentObjectVector[i]->setPosition(targetPosition);
 				mCurrentObjectVector[i]->showBoundingBox(false);
@@ -280,7 +304,7 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 			    mAnimationState->addTime(evt.timeSinceLastFrame * mAnimationSpeedUp);
 				mCurrentObjectVector.erase(mCurrentObjectVector.begin() + i);
 			}
-			else if (!isCollidedByRobots(mCurrentObjectVector[i], 10) && !isCollidedByRobots(mCenterSphere, 20)){
+			else if (!isCollidedByRobots(mCurrentObjectVector[i], 20) && !isCollidedByRobots(mCenterSphere, 20)){
 				mCurrentObjectVector[i]->translate(move * mDirection);
 				i ++;
 			}
@@ -288,6 +312,17 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 				mCurrentObjectVector[i]->translate(move * mCurrentBounceBackDirection);
 				i ++;
 			}
+
+			if (mDistance < mNearDistance) {
+				playSound = true;
+			}
+			else {
+				playSound = false;
+			}
+		}
+
+		if(playSound && mSound->isStopped()) {
+			mSound->play();
 		}
 	}
 
@@ -303,6 +338,7 @@ bool BasicTutorial_00::frameStarted(const Ogre::FrameEvent& evt) {
 }
 
 bool BasicTutorial_00::isCollidedByRobots(SceneNode* currentNode, double radius) {
+    mCurrentBounceBackDirection = Vector3(0.0, 0.0, 0.0);
 	bool collide = false;
 	mSceneMgr = mSceneMgrArr[0];
 	SphereSceneQuery* mSphereSceneQuery = 
@@ -319,7 +355,7 @@ bool BasicTutorial_00::isCollidedByRobots(SceneNode* currentNode, double radius)
 			collideVector.y = 0.0;
 			mCurrentBounceBackDirection += collideVector;
 			collideVector.normalise();
-			collideNode->translate(mCurrentMove * collideVector * -1.0);
+			collideNode->translate(mMove * collideVector * -1.0);
 	    	collide = true;
 	    }
 	}
@@ -327,6 +363,40 @@ bool BasicTutorial_00::isCollidedByRobots(SceneNode* currentNode, double radius)
 	return collide;
 }
 
+bool BasicTutorial_00::keyPressed( const OIS::KeyEvent &arg ) {
+	
+    bool flg = true;
+    std::stringstream ss;
+    ss << arg.key;
+    String msg;
+    ss >> msg;
+    msg += ":*** keyPressed ***\n";
+    Ogre::LogManager::getSingletonPtr()->logMessage( msg );
+
+	// Toggle off the particle system
+    if (arg.key == OIS::KC_M ) {
+		bool visible = true;
+        if(particleSystemState == "on") {
+			particleSystemState = "off";
+			visible = false;
+		}
+		else {
+			particleSystemState = "on";
+			visible = true;
+		}
+
+		for (int i = 0; i < mRobotNodeVector.size(); i ++) {
+			ParticleSystem* p = (ParticleSystem*) mRobotNodeVector[i]->getAttachedObject(0);
+			p->setVisible(visible);
+		}
+    }
+	else if (arg.key == OIS::KC_ESCAPE)
+    {
+        mShutDown = true;
+    }
+	return true;
+	
+}
 
 bool BasicTutorial_00::mouseMoved( const OIS::MouseEvent &arg ) {   
 	Ray mRay =mTrayMgr->getCursorRay(mCamera);
@@ -398,8 +468,9 @@ bool BasicTutorial_00::mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButt
 	    for (itr = result.movables.begin(); itr != result.movables.end(); ++itr)
 	    {
 	    	if (*itr)
-	    	{
+	    	{   
 	    		SceneNode* currentObject = (*itr)->getParentSceneNode();
+				// cout << "Name: " << currentObject->getName() << endl;
 	    		bool flgShow = currentObject->getShowBoundingBox();
 	    		currentObject->showBoundingBox(!flgShow);
 	    		mCurrentObjectVector.push_back(currentObject);
