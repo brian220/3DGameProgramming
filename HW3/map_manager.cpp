@@ -65,7 +65,7 @@ void MAP_MANAGER::computePositionBasedOnMeshMapMgr(const Vector3 &p0, const Vect
 		v = mMeshMapMgr->getGridCellValue(p.x, p.z);
 		if (v > 0.5) {
             // z component
-			// Add your own stuff 
+			p = p0 + Vector3(0, 0, diff.z);
 		}
 	}
 	
@@ -89,14 +89,14 @@ void MAP_MANAGER::computePositionBasedOnMeshMapMgr(const Vector3 &p0, const Vect
 		v = mMeshMapMgr->getGridCellValue(p.x, p.z);
 		if (v > 0.5) {
 			// x component
-			// Add your own stuff 
+			p = p0 + Vector3(diff.x, 0, 0);
 		}
 	} else {
 		p = p0 + Vector3(diff.x, 0, 0); 
 		v = mMeshMapMgr->getGridCellValue(p.x, p.z);
 		if (v > 0.5) {
 			// z component
-			// Add your own stuff 
+			p = p0 + Vector3(0, 0, diff.z);
 		}
 	}
 	
@@ -104,7 +104,7 @@ void MAP_MANAGER::computePositionBasedOnMeshMapMgr(const Vector3 &p0, const Vect
 		p.y = p1.y;
 	}
 
-	//p = p0;
+	p = p0;
 	
 }
 

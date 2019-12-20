@@ -119,8 +119,6 @@ void BAR_2D::setDefaultPos(Real x, Real y)
 
 void BAR_2D::update(const Camera *camera, Real time_step, Real xoffset, Real yoffset)
 {
-	
-
 	BAR_2D_PLACEMENT_METHOD method = mPlacementMethod;
 
 	switch(mPlacementMethod) {
@@ -130,9 +128,8 @@ void BAR_2D::update(const Camera *camera, Real time_step, Real xoffset, Real yof
 		case BAR_2D_PLACEMENT_METHOD_HORIZONTAL_CENTER:
 			break;
 		case BAR_2D_PLACEMENT_METHOD_ATTACHED_OBJ:
-			//if (mSceneNode == NULL) method = BAR_2D_PLACEMENT_METHOD_NONE;
+			if (mSceneNode == NULL) method = BAR_2D_PLACEMENT_METHOD_NONE;
 			break;
-
 	}
 	Real xx, yy;
 	switch(method) {

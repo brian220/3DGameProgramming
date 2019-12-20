@@ -152,21 +152,19 @@ void MONSTER_MANAGER::setParticleSystem(
     )
 {
     int particleCount = 0;
-    //for (int i = 0; i < mCurMonstersNum; ++i) 
-    for (int i = 0; i < 1; ++i) 
+    for (int i = 0; i < mCurMonstersNum; ++i) 
 	{
 		Vector3 q = mMonstersArr[i]->getInitPosition();
         float d = pos.distance(q);
         if (particleCount >= numParticles) break;
-        if (d < 0) {
-            /*
+        if (d < 150) {
             particleNodes[particleCount]->setVisible(true);
             setOffParticleSystem(
                particleNodes[particleCount],
                "explosion",
                q);
             ++particleCount;
-            */
+            
         }
     }
     for (int i = particleCount; i < numParticles; ++i )

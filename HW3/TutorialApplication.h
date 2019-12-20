@@ -77,6 +77,7 @@ private:
 	bool mKeyPressed;
 	Ogre::Real mToggle;
 	Ogre::Light *mLight0;
+	Ogre::Light *mLight1;
 
     Ogre::SceneNode* mParticleMainNode;
 
@@ -101,15 +102,18 @@ private:
     float mEnergy_Max;
 
     BAR_2D *mBar2D_Energy;
-BAR_2D *mBar2D_2_Speed;
+	BAR_2D *mBar2D_Energy_back;
+    BAR_2D *mBar2D_2_Speed;
+	BAR_2D *mBar2D_2_Speed_back;
 
-float mScoreCoord_X;
-float mScoreCoord_MaxX;
-float mScoreCoord_MinX;
-bool mScoreBoard_Direction;
-float mfScore;
-int mScore;
-	DIGIT_STRING_DIALOGUE *mDigitDialogue;
+    float mScoreCoord_X;
+    float mScoreCoord_MaxX;
+    float mScoreCoord_MinX;
+    bool mScoreBoard_Direction;
+    float mfScore;
+    int mScore;
+
+    DIGIT_STRING_DIALOGUE *mDigitDialogue;
     //
     int mLevel;
 	DIGIT_STRING_DIALOGUE *mDigitDialogue_Level;

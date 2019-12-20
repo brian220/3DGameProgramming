@@ -47,7 +47,7 @@ protected:
 	Real mTargetRadius;
 	AnimationState *mAnimationState;
 	//
-    	Plane mHalfPlane[5];
+    Plane mHalfPlane[5];
 	int mNumHalfPlanes;
     //
     int mLevel;

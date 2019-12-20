@@ -650,19 +650,46 @@ void WAGO_OGRE_MESH_OBJ::createWallsBasedOnBitmap(
 	Vector3 v0, v1, v2, v3;
 	int nf = 0;
 	bgnVertex();
+
 	// bottom
-    // Add your own stuff
-    /*
 	for (j = 0; j < nz; j++) {
 		z = j*dz;
 		flg_start = false;
 		for (i = 0; i < nx; i++) {
 			x = i*dx;
-		} //for i
+			if ((b->at(i, j) > 0.5) && !b->gr(i, j+1, 0.5)) {
+				if(flg_start) {
+				    if (b->gr(i+1, j, 0.5)) continue;
+					    v0 = Vector3(x+dx, 0, z+dz);
+					    v3 = Vector3(x+dx, h, z+dz);
+					    Vector3 normal = Vector3(0, 0, -1);
+					    addVertex(v1.x, v1.y, v1.z, v1.x, 0, -1, 0, 0);
+					    addVertex(v0.x, v0.y, v0.z, v0.x, 0, -1, 0, 0);
+					    addVertex(v3.x, v3.y, v3.z, v3.x, h, -1, 0, 0);
+					    addVertex(v2.x, v2.y, v2.z, v2.x, h, -1, 0, 0);
+			            flg_start = false;
+				        nf++;
+				} else {
+					v1 = Vector3(x, 0, z+dz);
+					v2 = Vector3(x, h, z+dz);
+					flg_start = true;
+				}
+			  } else {
+				  if (flg_start) {
+				     v0 = Vector3(x+dx, 0, z+dz);
+				     v3 = Vector3(x+dx, h, z+dz);
+					 addVertex(v1.x, v1.y, v1.z, v1.x, 0, -1, 0, 0);
+					 addVertex(v0.x, v0.y, v0.z, v0.x, 0, -1, 0, 0);
+					 addVertex(v3.x, v3.y, v3.z, v3.x, h, -1, 0, 0);
+					 addVertex(v2.x, v2.y, v2.z, v2.x, h, -1, 0, 0);
+			         flg_start = false;
+				     nf++;
+				  }
+			}
+		}
+	}
 
-	} // for j
-    */
-
+	
 	//top
 	for (j = 0; j < nz; j++) {
 		z = j*dz;
@@ -711,6 +738,7 @@ void WAGO_OGRE_MESH_OBJ::createWallsBasedOnBitmap(
 		}
 	}
     
+	
 	//left
 	for (i = 0; i < nx; i++) {
 		x = i*dx;
@@ -760,7 +788,7 @@ void WAGO_OGRE_MESH_OBJ::createWallsBasedOnBitmap(
 		}
 	}
     
-
+	
 	//right
 	for (i = 0; i < nx; i++) {
 		x = i*dx;
@@ -772,17 +800,13 @@ void WAGO_OGRE_MESH_OBJ::createWallsBasedOnBitmap(
 				//cout << "..." << endl;
 				if (flg_start) {
 					if (b->gr(i, j+1, 0.5)) continue;
-					//if (j>=nz-1) {
-					v0 = Vector3(x+dx, 0, z+dz);
-					v3 = Vector3(x+dx, h, z+dz);
-					//} else {
-					//	v0 = Vector3(x+dx, 0, z);
-					//	v3 = Vector3(x+dx, h, z);
-					//}
-					addVertex(v0.x, v0.y, v0.z, v0.z, 0, 1, 0, 0);
-					addVertex(v1.x, v1.y, v1.z, v1.z, 0, 1, 0, 0);
-					addVertex(v2.x, v2.y, v2.z, v2.z, h, 1, 0, 0);
-					addVertex(v3.x, v3.y, v3.z, v3.z, h, 1, 0, 0);
+					v0 = Vector3(x+dx, 0, z);
+				    v3 = Vector3(x+dx, h, z);
+					Vector3 normal = Vector3(0, 0, -1);
+					addVertex(v0.x, v0.y, v0.z, v0.z, 0, normal.x, normal.y, normal.z);
+					addVertex(v1.x, v1.y, v1.z, v1.z, 0, normal.x, normal.y, normal.z);
+					addVertex(v2.x, v2.y, v2.z, v2.z, h, normal.x, normal.y, normal.z);
+					addVertex(v3.x, v3.y, v3.z, v3.z, h, normal.x, normal.y, normal.z);
 					flg_start = false;
 					nf++;
 				} else {
@@ -792,19 +816,13 @@ void WAGO_OGRE_MESH_OBJ::createWallsBasedOnBitmap(
 				}
 			} else {
 				if (flg_start) {
-					//v0 = Vector3(x+dx, 0, z+dz);
-					//v3 = Vector3(x+dx, h, z+dz);
-					//if (j>=nz-1) {
-					v0 = Vector3(x+dx, 0, z+dz);
-					v3 = Vector3(x+dx, h, z+dz);
-					//} else {
-					//	v0 = Vector3(x+dx, 0, z);
-					//	v3 = Vector3(x+dx, h, z);
-					//}
-					addVertex(v0.x, v0.y, v0.z, v0.z, 0, 1, 0, 0);
-					addVertex(v1.x, v1.y, v1.z, v1.z, 0, 1, 0, 0);
-					addVertex(v2.x, v2.y, v2.z, v2.z, h, 1, 0, 0);
-					addVertex(v3.x, v3.y, v3.z, v3.z, h, 1, 0, 0);
+					v0 = Vector3(x+dx, 0, z);
+					v3 = Vector3(x+dx, h, z);
+					Vector3 normal = Vector3(0, 0, -1);
+					addVertex(v0.x, v0.y, v0.z, v0.z, 0, normal.x, normal.y, normal.z);
+					addVertex(v1.x, v1.y, v1.z, v1.z, 0, normal.x, normal.y, normal.z);
+					addVertex(v2.x, v2.y, v2.z, v2.z, h, normal.x, normal.y, normal.z);
+					addVertex(v3.x, v3.y, v3.z, v3.z, h, normal.x, normal.y, normal.z);
 					flg_start = false;
 					nf++;
 				}

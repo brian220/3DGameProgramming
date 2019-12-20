@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include "read_data.h"
-#define DATA_FILE_NAME	"game_data.txt"
+#define DATA_FILE_NAME	"0856601_game_data.txt"
 
 using namespace std;
 bool DATA_READER::mEnableShadow = true;
@@ -203,7 +203,7 @@ std::string DATA_READER::getSoundFileName_Explosion(){
 
   std::string DATA_READER::getSoundFileName_LevelUp() {
 	// For debug
-    return mSoundFile_Explosion;
+    return mSoundFile_LevelUp;
 }
  
 

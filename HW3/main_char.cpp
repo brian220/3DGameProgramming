@@ -78,7 +78,20 @@ void MAIN_CHAR::updateViewDirection()
 	Vector3 actualDirection;
 	actualDirection = mCamera->getRealDirection();
 
-    // add your own stuff
+    Vector3 mDirection = actualDirection;
+	Vector3 src = mSceneNode->getOrientation() * Vector3::UNIT_X;
+	src.y = 0;
+	mDirection.y = 0;
+	src.normalise();
+	// Special case for turning degree 180,
+	// It may throw devide by zero error if we don't use this special case
+	if ((1.0 + src.dotProduct(mDirection)) < 0.0001) {
+        mSceneNode->yaw(Ogre::Degree(180));
+    }
+    else {
+        Ogre::Quaternion quat = src.getRotationTo(mDirection);
+        mSceneNode->rotate(quat);
+    }
 }
 
 void MAIN_CHAR::walkForward(const Ogre::FrameEvent& evt)

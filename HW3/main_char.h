@@ -29,18 +29,18 @@ public:
 	virtual void unsetWalkBackward();
     unsigned int getActionMode() const;
 	virtual void update(const Ogre::FrameEvent& evt);
-virtual void updateWeapon(const Ogre::FrameEvent& evt);
-virtual void setFireAction_Normal();
+    virtual void updateWeapon(const Ogre::FrameEvent& evt);
+    virtual void setFireAction_Normal();
 	virtual Vector3 getWeaponPosition() const;
-virtual void updateViewDirection();
-virtual void setMaxBulletsNum(int a_Num);
+    virtual void updateViewDirection();
+    virtual void setMaxBulletsNum(int a_Num);
 
-virtual void setPosition_to_Environment(const Vector3 &p);
-virtual void setEyePosition_Y(double y);
-virtual void setWalkingMaxSpeed_Modifier(double walkingMaxSpeed);
-WEAPON_MANAGER *getWeaponManager( );
+    virtual void setPosition_to_Environment(const Vector3 &p);
+    virtual void setEyePosition_Y(double y);
+    virtual void setWalkingMaxSpeed_Modifier(double walkingMaxSpeed);
+    WEAPON_MANAGER *getWeaponManager( );
 
-void installWeaponWSManager(WeaponParticleSystemManager *wpsMgr);
+    void installWeaponWSManager(WeaponParticleSystemManager *wpsMgr);
 };
 
 #endif
